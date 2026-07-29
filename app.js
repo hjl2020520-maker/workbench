@@ -433,8 +433,9 @@ function renderCalendar() {
     }
 
     const isToday = dateStr === today;
+    const isSelected = dateStr === selectedDay;
     html += `
-      <div class="cal-day ${cls} ${isToday?'today':''} ${hasRec?'has-record':''}" onclick="openDayModal('${dateStr}')">
+      <div class="cal-day ${cls} ${isToday?'today':''} ${isSelected?'selected':''} ${hasRec?'has-record':''}" onclick="selectCalendarDay('${dateStr}')">
         <span class="cal-date">${d}</span>
         ${mark ? `<span style="font-size:8px;position:absolute;top:0">${mark}</span>` : ''}
         ${icons ? `<span class="cal-icons">${icons}</span>` : ''}
@@ -443,6 +444,19 @@ function renderCalendar() {
   grid.innerHTML = html;
   document.getElementById('periodMonthTitle').textContent = periodYear+'年'+(periodMonth+1)+'月';
   document.getElementById('yearLabel').textContent = periodYear;
+}
+
+function selectCalendarDay(dateStr) {
+  selectedDay = dateStr;
+  renderCalendar();
+  renderPeriodList();
+  renderDayPreview();
+}
+
+function renderDayPreview() {
+  // 更新标题为选中日期
+  const date = new Date(selectedDay);
+  document.querySelector('.record-title-bar span').textContent = '🌷 ' + formatDateCN(selectedDay) + ' 速记';
 }
 
 function updatePeriodHero() {
@@ -465,8 +479,7 @@ function updatePeriodHero() {
 function renderPeriodList() {
   const data = getData();
   const list = document.getElementById('recordList');
-  const today = todayStr();
-  const rec = data.periodRecords[today] || {};
+  const rec = data.periodRecords[selectedDay] || {};
 
   list.innerHTML = data.periodItems.map(item => {
     let v = rec[item.key];
@@ -474,18 +487,48 @@ function renderPeriodList() {
     else if (item.type === 'mood') v = v || '--';
     else v = v || '--';
     return `
-      <li data-key="${item.key}" onclick="openItemModal('${item.key}')">
-        <span class="ri-icon" style="background:${item.color}">${item.emoji}</span>
-        <span class="ri-label">${item.label}</span>
-        <span class="ri-val" id="val-${item.key}">${v}</span>
-        <span class="ri-add">+</span>
+      <li class="period-item-wrap" data-key="${item.key}">
+        <div class="period-item" id="pi-${item.key}" onclick="openItemModal('${item.key}','${selectedDay}')">
+          <span class="ri-icon" style="background:${item.color}">${item.emoji}</span>
+          <span class="ri-label">${item.label}</span>
+          <span class="ri-val" id="val-${item.key}">${v}</span>
+          <span class="ri-add">+</span>
+        </div>
+        <button class="period-delete-btn" onclick="deletePeriodItemRecord('${item.key}','${selectedDay}')">删除</button>
       </li>`;
   }).join('');
+
+  bindPeriodItemSwipe(list);
+}
+
+function bindPeriodItemSwipe(container) {
+  container.querySelectorAll('.period-item-wrap').forEach(wrap => {
+    const item = wrap.querySelector('.period-item');
+    let sx=0, sw=false;
+    item.addEventListener('touchstart', e => { sx=e.touches[0].clientX; sw=false; });
+    item.addEventListener('touchmove', e => {
+      const dx = sx - e.touches[0].clientX;
+      if (dx > 30 && !sw) { item.classList.add('swiped'); sw = true; }
+      if (dx < -30 && sw) { item.classList.remove('swiped'); sw = false; }
+    });
+    document.addEventListener('click', ev => { if (!wrap.contains(ev.target) && item.classList.contains('swiped')) item.classList.remove('swiped'); });
+  });
+}
+
+function deletePeriodItemRecord(key, dateStr) {
+  const data = getData();
+  if (data.periodRecords[dateStr]) {
+    delete data.periodRecords[dateStr][key];
+    if (Object.keys(data.periodRecords[dateStr]).length === 0) delete data.periodRecords[dateStr];
+  }
+  setData(data);
+  renderCalendar(); renderPeriodList(); renderDayPreview();
+  showToast('已删除');
 }
 
 // ============= 每日记录弹窗 =============
 function openDayModal(dateStr) {
-  selectedDay = dateStr;
+  selectCalendarDay(dateStr);
   document.getElementById('dayModalTitle').textContent = formatDateCN(dateStr);
   const data = getData();
   const rec = data.periodRecords[dateStr] || {};
@@ -544,6 +587,17 @@ function openItemModal(key, dateStr) {
   }
 
   let inputHtml = `<div class="modal-date-row"><label>日期：</label><input type="date" id="recordDateInput" value="${currentRecordDate}"></div>`;
+
+  const quickOptions = {
+    color: ['鲜红','暗红','褐色','粉色','黑色'],
+    pain: ['无痛','轻度','中度','严重'],
+    symptom: ['头痛','腹痛','乳房胀痛','腰酸','乏力','恶心'],
+    discharge: ['正常','增多','减少','异常'],
+    temp: ['36.0','36.3','36.5','36.8','37.0','37.3'],
+    weight: ['50.0','55.0','60.0','65.0','70.0'],
+    medicine: ['维生素','布洛芬','叶酸','止痛药','感冒药']
+  };
+
   if (item.type === 'love') {
     inputHtml += `
       <div style="display:flex;gap:10px;margin-top:8px;">
@@ -554,12 +608,31 @@ function openItemModal(key, dateStr) {
   } else {
     const ph = { color:'如：鲜红、暗红、褐色', pain:'如：无痛、轻度、中度、严重', symptom:'如：头痛、腹痛、乳房胀痛',
                  discharge:'如：正常、增多、异常', temp:'如：36.5℃', weight:'如：60.8kg', medicine:'如：维生素、布洛芬、叶酸' };
-    inputHtml += `<input type="text" id="recordValInput" placeholder="${ph[key] || '请输入'}" style="width:100%;margin-top:8px;padding:10px;border:1.5px solid var(--primary-light);border-radius:10px;font-size:14px;">`;
+    const opts = quickOptions[key] || [];
+    let optsHtml = '';
+    if (opts.length) {
+      optsHtml = `<div style="display:flex;flex-wrap:wrap;gap:8px;margin:10px 0;">
+        ${opts.map(o => `<button type="button" class="quick-opt-btn" onclick="setRecordVal('${o.replace(/'/g,'\\\'')}')">${o}</button>`).join('')}
+        <button type="button" class="quick-opt-btn edit" onclick="focusRecordInput()">✏️ 编辑</button>
+      </div>`;
+    }
+    inputHtml += optsHtml + `<input type="text" id="recordValInput" placeholder="${ph[key] || '请输入'}" style="width:100%;padding:10px;border:1.5px solid var(--primary-light);border-radius:10px;font-size:14px;">`;
   }
 
   body.innerHTML = inputHtml;
   document.getElementById('modalOverlay').classList.add('show');
   if (item.type === 'love') setTimeout(() => setLoveValue(true), 50);
+}
+
+function setRecordVal(val) {
+  const input = document.getElementById('recordValInput');
+  input.value = val;
+  input.style.background = 'var(--primary-light)';
+  setTimeout(() => input.style.background = '#fff', 200);
+}
+
+function focusRecordInput() {
+  document.getElementById('recordValInput').focus();
 }
 
 function setLoveValue(val) {
@@ -586,8 +659,10 @@ function savePeriodRecord() {
   setData(data);
 
   closeModal();
+  selectedDay = date;
   renderCalendar();
   renderPeriodList();
+  renderDayPreview();
   if (document.getElementById('dayOverlay').classList.contains('show')) openDayModal(date);
   showToast('✓ 已保存');
 }
@@ -609,7 +684,8 @@ function saveMoodRecord() {
   data.periodRecords[date]['mood'] = selectedMood;
   setData(data);
   document.getElementById('moodOverlay').classList.remove('show');
-  renderCalendar(); renderPeriodList();
+  selectedDay = date;
+  renderCalendar(); renderPeriodList(); renderDayPreview();
   if (document.getElementById('dayOverlay').classList.contains('show')) openDayModal(date);
   showToast('✓ 心情已保存');
 }
@@ -764,7 +840,7 @@ function initApp() {
     if (clean) { currentAmount = clean; document.getElementById('amountDisplay').textContent = clean; }
   });
 
-  updatePeriodHero(); renderPeriodList();
+  updatePeriodHero(); renderPeriodList(); renderDayPreview();
 }
 
 document.addEventListener('DOMContentLoaded', showSplash);
