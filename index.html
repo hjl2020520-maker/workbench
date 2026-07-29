@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="工作台">
 <meta name="theme-color" content="#9b7edc">
 <meta name="mobile-web-app-capable" content="yes">
@@ -22,9 +22,7 @@
   <div class="splash-content">
     <div class="splash-image-wrap">
       <img src="cover.jpg" alt="cover" class="splash-image">
-      <div class="splash-sparkle s1">✨</div>
-      <div class="splash-sparkle s2">✨</div>
-      <div class="splash-sparkle s3">✨</div>
+      <div class="splash-sparkle s1">✨</div><div class="splash-sparkle s2">✨</div><div class="splash-sparkle s3">✨</div>
     </div>
     <div class="splash-title">工作台</div>
     <div class="splash-subtitle">记录生活的每一刻小美好</div>
@@ -32,34 +30,21 @@
   </div>
 </div>
 
-<!-- 状态栏 -->
-<div class="status-bar">
-  <span class="time" id="statusTime">21:47</span>
-  <span class="status-icons">
-    <span>📶</span><span>📡</span>
-    <span class="battery">40</span>
-  </span>
-</div>
-
 <!-- ============ 存钱页 ============ -->
 <main class="tab-page active" id="page-money">
-
   <header class="page-header">
     <button class="header-back">‹</button>
-    <h1 id="moneyPageTitle">家庭记账本</h1>
-    <div class="header-right">
-      <button class="header-btn">⋯</button>
-      <button class="header-btn">◎</button>
-    </div>
+    <h1>家庭记账本</h1>
+    <div class="header-right"><button class="header-btn" onclick="openToolMenu()">⋯</button><button class="header-btn" onclick="showToast('个人中心')">◎</button></div>
   </header>
 
-  <div class="tool-row">
-    <button class="tool-btn"><span class="tool-icon">📤</span>导出</button>
-    <button class="tool-btn"><span class="tool-icon">📥</span>导入</button>
-    <button class="tool-btn"><span class="tool-icon">👤</span>成员</button>
+  <!-- 工具菜单 -->
+  <div class="tool-menu" id="toolMenu">
+    <button onclick="exportCSV()">📤 导出 CSV</button>
+    <button onclick="importCSV()">📥 导入 CSV</button>
+    <button onclick="manageMembers()">👤 成员管理</button>
   </div>
 
-  <!-- 汇总卡片 -->
   <section class="money-summary-card">
     <div class="msc-bg-heart">♡</div>
     <div class="msc-title"><span class="msc-emoji">🏠</span><span id="summaryTitle">我们家的记账本</span><span class="msc-heart">♡</span></div>
@@ -72,7 +57,6 @@
     </div>
   </section>
 
-  <!-- 账本切换 -->
   <div class="account-row">
     <button class="account-pill active" data-book="all" onclick="switchBook('all')">
       <span class="ap-emoji" style="background:#e6dcff">📔</span>总账
@@ -85,7 +69,6 @@
     </button>
   </div>
 
-  <!-- 表单 -->
   <section class="form-card">
     <div class="type-toggle">
       <button class="tt-btn active" data-type="out" onclick="switchType('out')">💸 支出</button>
@@ -98,7 +81,10 @@
     <div class="category-grid" id="categoryGrid"></div>
     <div class="meta-row">
       <div class="meta-cell note"><span>📝</span><input type="text" id="noteInput" placeholder="备注(可选)"></div>
-      <div class="meta-cell date" id="dateCell"><span id="dateText">2026年7月28日</span></div>
+      <div class="meta-cell date" id="dateCell" onclick="pickRecordDate()">
+        <span id="dateText">2026年7月29日</span>
+        <input type="date" id="recordDateInput" value="" onchange="onRecordDateChange(this.value)">
+      </div>
     </div>
     <button class="save-btn" onclick="saveRecord()">✓ 记一笔</button>
   </section>
@@ -113,9 +99,7 @@
       </div>
     </div>
     <div class="recent-empty" id="recentEmpty">
-      <div class="recent-tulip">🌷</div>
-      <div class="recent-text">还没有记录哦</div>
-      <div class="recent-tip">快给家里记第一笔小账吧</div>
+      <div class="recent-tulip">🌷</div><div class="recent-text">还没有记录哦</div><div class="recent-tip">快给家里记第一笔小账吧</div>
     </div>
     <ul class="recent-list" id="recentList"></ul>
   </section>
@@ -123,7 +107,6 @@
 
 <!-- ============ 经期页 ============ -->
 <main class="tab-page" id="page-period">
-
   <header class="page-header">
     <button class="header-back">‹</button>
     <h1 id="periodMonthTitle">2026年7月</h1>
@@ -134,7 +117,6 @@
     </div>
   </header>
 
-  <!-- 年份快速选择 -->
   <div class="year-picker">
     <button class="yp-btn" onclick="changeYear(-1)">◀</button>
     <span class="yp-year" id="yearLabel">2026</span>
@@ -148,7 +130,6 @@
     <button class="pt-btn">育儿</button>
   </nav>
 
-  <!-- Hero卡片 -->
   <section class="period-hero">
     <div class="ph-content">
       <div class="ph-title" id="phTitle">未记录经期</div>
@@ -161,7 +142,6 @@
     </div>
   </section>
 
-  <!-- 日历 -->
   <section class="calendar-card">
     <div class="cal-weekdays"><span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span></div>
     <div class="cal-grid" id="calGrid"></div>
@@ -174,65 +154,37 @@
     </div>
   </section>
 
-  <!-- 记录列表 -->
   <section class="record-card">
+    <div class="record-title">🌷 今日速记</div>
     <ul class="record-list" id="recordList">
       <li data-key="color" onclick="openRecordModal('颜色','🎨','color')">
-        <span class="ri-icon pink-icon">🎨</span>
-        <span class="ri-label">颜色</span>
-        <span class="ri-val" id="val-color">--</span>
-        <span class="ri-add">+</span>
+        <span class="ri-icon pink-icon">🎨</span><span class="ri-label">颜色</span><span class="ri-val" id="val-color">--</span><span class="ri-add">+</span>
       </li>
       <li data-key="pain" onclick="openRecordModal('痛经','⚡','pain')">
-        <span class="ri-icon red-icon">⚡</span>
-        <span class="ri-label">痛经</span>
-        <span class="ri-val" id="val-pain">--</span>
-        <span class="ri-add">+</span>
+        <span class="ri-icon red-icon">⚡</span><span class="ri-label">痛经</span><span class="ri-val" id="val-pain">--</span><span class="ri-add">+</span>
       </li>
       <li data-key="love" onclick="openRecordModal('爱爱','💗','love')">
-        <span class="ri-icon heart-icon">💗</span>
-        <span class="ri-label">爱爱</span>
-        <span class="ri-val" id="val-love">--</span>
-        <span class="ri-add">+</span>
+        <span class="ri-icon heart-icon">💗</span><span class="ri-label">爱爱</span><span class="ri-val" id="val-love">--</span><span class="ri-add">+</span>
       </li>
       <li data-key="symptom" onclick="openRecordModal('症状','💊','symptom')">
-        <span class="ri-icon blue-icon">💊</span>
-        <span class="ri-label">症状</span>
-        <span class="ri-val" id="val-symptom">--</span>
-        <span class="ri-add">+</span>
+        <span class="ri-icon blue-icon">💊</span><span class="ri-label">症状</span><span class="ri-val" id="val-symptom">--</span><span class="ri-add">+</span>
       </li>
       <li class="mood-row" data-key="mood" onclick="openMoodModal()">
-        <span class="ri-icon yellow-icon">😊</span>
-        <span class="ri-label">心情</span>
-        <span class="mood-list">
-          <span>😀</span><span>😐</span><span>😨</span><span>😩</span><span>😣</span>
-        </span>
-        <span class="ri-val" id="val-mood">--</span>
-        <span class="ri-add">+</span>
+        <span class="ri-icon yellow-icon">😊</span><span class="ri-label">心情</span>
+        <span class="mood-list"><span>😀</span><span>😐</span><span>😨</span><span>😩</span><span>😣</span></span>
+        <span class="ri-val" id="val-mood">--</span><span class="ri-add">+</span>
       </li>
       <li data-key="discharge" onclick="openRecordModal('白带','🪻','discharge')">
-        <span class="ri-icon purple-icon">🪻</span>
-        <span class="ri-label">白带</span>
-        <span class="ri-val" id="val-discharge">--</span>
-        <span class="ri-add">+</span>
+        <span class="ri-icon purple-icon">🪻</span><span class="ri-label">白带</span><span class="ri-val" id="val-discharge">--</span><span class="ri-add">+</span>
       </li>
       <li data-key="temp" onclick="openRecordModal('体温','🌡️','temp')">
-        <span class="ri-icon teal-icon">🌡️</span>
-        <span class="ri-label">体温</span>
-        <span class="ri-val" id="val-temp">--</span>
-        <span class="ri-add">+</span>
+        <span class="ri-icon teal-icon">🌡️</span><span class="ri-label">体温</span><span class="ri-val" id="val-temp">--</span><span class="ri-add">+</span>
       </li>
       <li data-key="weight" onclick="openRecordModal('体重','💜','weight')">
-        <span class="ri-icon purple2-icon">💜</span>
-        <span class="ri-label">体重</span>
-        <span class="ri-val" id="val-weight">--</span>
-        <span class="ri-add">+</span>
+        <span class="ri-icon purple2-icon">💜</span><span class="ri-label">体重</span><span class="ri-val" id="val-weight">--</span><span class="ri-add">+</span>
       </li>
       <li data-key="medicine" onclick="openRecordModal('吃药','💊','medicine')">
-        <span class="ri-icon pill-icon">💊</span>
-        <span class="ri-label">吃药</span>
-        <span class="ri-val" id="val-medicine">--</span>
-        <span class="ri-add">+</span>
+        <span class="ri-icon pill-icon">💊</span><span class="ri-label">吃药</span><span class="ri-val" id="val-medicine">--</span><span class="ri-add">+</span>
       </li>
     </ul>
   </section>
@@ -250,24 +202,18 @@
   </button>
 </nav>
 
-<!-- ============ 记录弹窗 ============ -->
+<!-- ============ 弹窗 ============ -->
 <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
   <div class="modal-box" onclick="event.stopPropagation()">
-    <div class="modal-header">
-      <span id="modalTitle">记录</span>
-      <button class="modal-close" onclick="closeModal()">×</button>
-    </div>
+    <div class="modal-header"><span id="modalTitle">记录</span><button class="modal-close" onclick="closeModal()">×</button></div>
     <div class="modal-body" id="modalBody"></div>
-    <div class="modal-footer">
-      <button class="modal-btn save" onclick="savePeriodRecord()">保存</button>
-    </div>
+    <div class="modal-footer"><button class="modal-btn save" onclick="savePeriodRecord()">保存</button></div>
   </div>
 </div>
 
-<!-- 心情弹窗 -->
 <div class="modal-overlay" id="moodOverlay" onclick="closeMoodModal(event)">
   <div class="modal-box" onclick="event.stopPropagation()">
-    <div class="modal-header"><span>心情</span><button class="modal-close" onclick="closeMoodModal()">×</button></div>
+    <div class="modal-header"><span id="moodModalTitle">心情</span><button class="modal-close" onclick="closeMoodModal()">×</button></div>
     <div class="modal-body">
       <div class="mood-picker">
         <button class="mood-opt" data-mood="😀" onclick="selectMood('😀')">😀<span>开心</span></button>
@@ -276,27 +222,20 @@
         <button class="mood-opt" data-mood="😩" onclick="selectMood('😩')">😩<span>难过</span></button>
         <button class="mood-opt" data-mood="😣" onclick="selectMood('😣')">😣<span>很糟</span></button>
       </div>
-      <div class="modal-date-row">
-        <label>日期：</label>
-        <input type="date" id="moodDateInput">
-      </div>
+      <div class="modal-date-row"><label>日期：</label><input type="date" id="moodDateInput"></div>
     </div>
-    <div class="modal-footer">
-      <button class="modal-btn save" onclick="saveMoodRecord()">保存</button>
-    </div>
+    <div class="modal-footer"><button class="modal-btn save" onclick="saveMoodRecord()">保存</button></div>
   </div>
 </div>
 
-<!-- Toast -->
+<div class="modal-overlay" id="dayOverlay" onclick="closeDayModal(event)">
+  <div class="modal-box day-box" onclick="event.stopPropagation()">
+    <div class="modal-header"><span id="dayModalTitle">7月29日</span><button class="modal-close" onclick="closeDayModal()">×</button></div>
+    <div class="modal-body"><div id="dayRecordsList"></div></div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
-
-<!-- 添加主屏幕 -->
-<div class="add-homescreen" id="addHomescreen">
-  <div class="ah-inner">
-    <span>💜 添加到主屏幕，像 App 一样使用</span>
-    <button onclick="document.getElementById('addHomescreen').style.display='none'">×</button>
-  </div>
-</div>
 
 <script src="app.js"></script>
 </body>
