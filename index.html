@@ -155,38 +155,11 @@
   </section>
 
   <section class="record-card">
-    <div class="record-title">🌷 今日速记</div>
-    <ul class="record-list" id="recordList">
-      <li data-key="color" onclick="openRecordModal('颜色','🎨','color')">
-        <span class="ri-icon pink-icon">🎨</span><span class="ri-label">颜色</span><span class="ri-val" id="val-color">--</span><span class="ri-add">+</span>
-      </li>
-      <li data-key="pain" onclick="openRecordModal('痛经','⚡','pain')">
-        <span class="ri-icon red-icon">⚡</span><span class="ri-label">痛经</span><span class="ri-val" id="val-pain">--</span><span class="ri-add">+</span>
-      </li>
-      <li data-key="love" onclick="openRecordModal('爱爱','💗','love')">
-        <span class="ri-icon heart-icon">💗</span><span class="ri-label">爱爱</span><span class="ri-val" id="val-love">--</span><span class="ri-add">+</span>
-      </li>
-      <li data-key="symptom" onclick="openRecordModal('症状','💊','symptom')">
-        <span class="ri-icon blue-icon">💊</span><span class="ri-label">症状</span><span class="ri-val" id="val-symptom">--</span><span class="ri-add">+</span>
-      </li>
-      <li class="mood-row" data-key="mood" onclick="openMoodModal()">
-        <span class="ri-icon yellow-icon">😊</span><span class="ri-label">心情</span>
-        <span class="mood-list"><span>😀</span><span>😐</span><span>😨</span><span>😩</span><span>😣</span></span>
-        <span class="ri-val" id="val-mood">--</span><span class="ri-add">+</span>
-      </li>
-      <li data-key="discharge" onclick="openRecordModal('白带','🪻','discharge')">
-        <span class="ri-icon purple-icon">🪻</span><span class="ri-label">白带</span><span class="ri-val" id="val-discharge">--</span><span class="ri-add">+</span>
-      </li>
-      <li data-key="temp" onclick="openRecordModal('体温','🌡️','temp')">
-        <span class="ri-icon teal-icon">🌡️</span><span class="ri-label">体温</span><span class="ri-val" id="val-temp">--</span><span class="ri-add">+</span>
-      </li>
-      <li data-key="weight" onclick="openRecordModal('体重','💜','weight')">
-        <span class="ri-icon purple2-icon">💜</span><span class="ri-label">体重</span><span class="ri-val" id="val-weight">--</span><span class="ri-add">+</span>
-      </li>
-      <li data-key="medicine" onclick="openRecordModal('吃药','💊','medicine')">
-        <span class="ri-icon pill-icon">💊</span><span class="ri-label">吃药</span><span class="ri-val" id="val-medicine">--</span><span class="ri-add">+</span>
-      </li>
-    </ul>
+    <div class="record-title-bar">
+      <span>🌷 今日速记</span>
+      <button class="edit-period-btn" onclick="editPeriodItems()">编辑</button>
+    </div>
+    <ul class="record-list" id="recordList"></ul>
   </section>
 </main>
 
@@ -232,6 +205,18 @@
   <div class="modal-box day-box" onclick="event.stopPropagation()">
     <div class="modal-header"><span id="dayModalTitle">7月29日</span><button class="modal-close" onclick="closeDayModal()">×</button></div>
     <div class="modal-body"><div id="dayRecordsList"></div></div>
+  </div>
+</div>
+
+<!-- 类别编辑弹窗 -->
+<div class="modal-overlay" id="editOverlay" onclick="closeEditModal(event)">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-header"><span id="editModalTitle">编辑</span><button class="modal-close" onclick="closeEditModal()">×</button></div>
+    <div class="modal-body" id="editModalBody"></div>
+    <div class="modal-footer">
+      <button class="modal-btn save" onclick="saveEditItem()">保存</button>
+      <button class="modal-btn danger" id="editDeleteBtn" onclick="deleteEditItem()">删除</button>
+    </div>
   </div>
 </div>
 

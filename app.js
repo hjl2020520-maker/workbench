@@ -1,5 +1,5 @@
 // ============= 数据存储 =============
-const STORE_KEY = 'workbench-v4';
+const STORE_KEY = 'workbench-v5';
 
 function getData() {
   try { return JSON.parse(localStorage.getItem(STORE_KEY)) || defaultData(); }
@@ -12,24 +12,33 @@ function defaultData() {
     records: [],
     members: ['我', '家人'],
     periodStart: null, periodLength: 5, cycleLength: 28,
-    periodRecords: {}
+    periodRecords: {},
+    // 经期项目可自定义
+    periodItems: [
+      { key: 'color', label: '颜色', emoji: '🎨', color: '#f3e8ff', type: 'text' },
+      { key: 'pain', label: '痛经', emoji: '⚡', color: '#ffd1dc', type: 'text' },
+      { key: 'love', label: '爱爱', emoji: '💗', color: '#ffe4ef', type: 'love' },
+      { key: 'symptom', label: '症状', emoji: '💊', color: '#e0f2fe', type: 'text' },
+      { key: 'mood', label: '心情', emoji: '😊', color: '#fef3c7', type: 'mood' },
+      { key: 'discharge', label: '白带', emoji: '🪻', color: '#f3e8ff', type: 'text' },
+      { key: 'temp', label: '体温', emoji: '🌡️', color: '#ccfbf1', type: 'text' },
+      { key: 'weight', label: '体重', emoji: '💜', color: '#ede9fe', type: 'text' },
+      { key: 'medicine', label: '吃药', emoji: '💊', color: '#fee2e2', type: 'text' }
+    ],
+    // 支出/收入类别可自定义
+    categoriesOut: [
+      { name: '餐饮', emoji: '🍚' },{ name: '交通', emoji: '🚗' },{ name: '购物', emoji: '🛍️' },
+      { name: '居家', emoji: '🏠' },{ name: '娱乐', emoji: '🎮' },{ name: '医疗', emoji: '💊' },
+      { name: '教育', emoji: '📚' },{ name: '通讯', emoji: '📱' },{ name: '人情', emoji: '🎁' },
+      { name: '水电', emoji: '💡' },{ name: '服饰', emoji: '👕' },{ name: '零食', emoji: '🍪' },
+      { name: '宠物', emoji: '🐶' },{ name: '其他', emoji: '📌' }
+    ],
+    categoriesIn: [
+      { name: '工资', emoji: '💵' },{ name: '奖金', emoji: '🧧' },{ name: '理财', emoji: '📈' },
+      { name: '兼职', emoji: '💻' },{ name: '红包', emoji: '🎉' },{ name: '其他', emoji: '📌' }
+    ]
   };
 }
-
-// ============= 分类 =============
-const CATEGORIES = {
-  out: [
-    { name: '餐饮', emoji: '🍚' },{ name: '交通', emoji: '🚗' },{ name: '购物', emoji: '🛍️' },
-    { name: '居家', emoji: '🏠' },{ name: '娱乐', emoji: '🎮' },{ name: '医疗', emoji: '💊' },
-    { name: '教育', emoji: '📚' },{ name: '通讯', emoji: '📱' },{ name: '人情', emoji: '🎁' },
-    { name: '水电', emoji: '💡' },{ name: '服饰', emoji: '👕' },{ name: '零食', emoji: '🍪' },
-    { name: '宠物', emoji: '🐶' },{ name: '其他', emoji: '📌' },{ name: '编辑', emoji: '✏️' }
-  ],
-  in: [
-    { name: '工资', emoji: '💵' },{ name: '奖金', emoji: '🧧' },{ name: '理财', emoji: '📈' },
-    { name: '兼职', emoji: '💻' },{ name: '红包', emoji: '🎉' },{ name: '其他', emoji: '📌' }
-  ]
-};
 
 const BOOK_LABELS = { all:'总账', family:'家庭开销', personal:'个人开支' };
 const BOOK_TITLES = { all:'我们家的记账本', family:'家庭开销', personal:'个人开支' };
@@ -57,12 +66,14 @@ function switchTab(tab) {
   document.getElementById('page-'+tab).classList.add('active');
   document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
   document.querySelector(`.tab-item[data-tab="${tab}"]`).classList.add('active');
-  if (tab === 'period') { renderCalendar(); updatePeriodHero(); updatePeriodRecordVals(); }
+  if (tab === 'period') { renderCalendar(); updatePeriodHero(); renderPeriodList(); }
 }
 
 // ============= 存钱 =============
-let currentBook = 'all', currentType = 'out', currentCategory = '餐饮', currentAmount = '0', recentFilter = 'all';
+let currentBook = 'all', currentType = 'out', currentCategory = '', currentAmount = '0', recentFilter = 'all';
 let recordDate = todayStr();
+
+function getCategories(type) { const data = getData(); return type==='out' ? data.categoriesOut : data.categoriesIn; }
 
 function switchBook(book) {
   currentBook = book;
@@ -75,7 +86,10 @@ function switchBook(book) {
 }
 
 function switchType(type) {
-  currentType = type; currentCategory = type==='out'?'餐饮':'工资'; currentAmount = '0';
+  currentType = type;
+  const list = getCategories(type);
+  currentCategory = list[0].name;
+  currentAmount = '0';
   document.getElementById('amountDisplay').textContent = '0';
   document.querySelectorAll('.tt-btn').forEach(b => b.classList.remove('active'));
   document.querySelector(`.tt-btn[data-type="${type}"]`).classList.add('active');
@@ -84,10 +98,17 @@ function switchType(type) {
 
 function renderCategories() {
   const grid = document.getElementById('categoryGrid');
-  grid.innerHTML = CATEGORIES[currentType].map(c => `
-    <div class="cat-item ${c.name===currentCategory?'active':''}" onclick="selectCategory('${c.name}')">
+  const list = getCategories(currentType);
+  let html = list.map(c => `
+    <div class="cat-item ${c.name===currentCategory?'active':''}" onclick="selectCategory('${c.name.replace(/'/g,'\\\'')}')">
       <div class="cat-emoji">${c.emoji}</div><div class="cat-name">${c.name}</div>
     </div>`).join('');
+  // 编辑按钮
+  html += `
+    <div class="cat-item" onclick="editMoneyCategories()">
+      <div class="cat-emoji" style="background:#f0f0f0">✏️</div><div class="cat-name">编辑</div>
+    </div>`;
+  grid.innerHTML = html;
 }
 
 function selectCategory(name) { currentCategory = name; renderCategories(); }
@@ -110,10 +131,10 @@ function saveRecord() {
   if (currentBook==='all') { showToast('请选择「家庭开销」或「个人开支」记账'); return; }
   const data = getData();
   const note = document.getElementById('noteInput').value;
-  const cat = CATEGORIES[currentType].find(c => c.name===currentCategory);
+  const cat = getCategories(currentType).find(c => c.name===currentCategory);
   data.records.unshift({
     id: generateId(), book: currentBook, type: currentType, amount,
-    category: currentCategory, emoji: cat.emoji, note,
+    category: currentCategory, emoji: cat ? cat.emoji : '📌', note,
     date: recordDate,
     time: new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})
   });
@@ -183,14 +204,94 @@ function bindSwipeDelete(container) {
   });
 }
 
+// ============= 编辑存钱类别 =============
+let editCatType = 'out', editingCatName = null;
+
+function editMoneyCategories() {
+  const data = getData();
+  const list = data.categoriesOut.concat(data.categoriesIn);
+  const outHtml = data.categoriesOut.map(c => `<button class="edit-cat-pill" onclick="openCatEdit('out','${c.name.replace(/'/g,'\\\'')}')">${c.emoji} ${c.name}</button>`).join('');
+  const inHtml = data.categoriesIn.map(c => `<button class="edit-cat-pill" onclick="openCatEdit('in','${c.name.replace(/'/g,'\\\'')}')">${c.emoji} ${c.name}</button>`).join('');
+
+  document.getElementById('editModalTitle').textContent = '编辑类别';
+  document.getElementById('editModalBody').innerHTML = `
+    <div style="margin-bottom:12px;"><strong>支出类别</strong><div class="edit-cat-grid">${outHtml}</div></div>
+    <div style="margin-bottom:12px;"><strong>收入类别</strong><div class="edit-cat-grid">${inHtml}</div></div>
+    <div class="edit-add-row">
+      <select id="newCatType"><option value="out">支出</option><option value="in">收入</option></select>
+      <input type="text" id="newCatEmoji" placeholder="图标如 🍚" maxlength="2">
+      <input type="text" id="newCatName" placeholder="名称">
+      <button class="modal-btn save" style="flex:0 0 auto;" onclick="addCategory()">添加</button>
+    </div>
+  `;
+  document.getElementById('editDeleteBtn').style.display = 'none';
+  document.getElementById('editOverlay').classList.add('show');
+}
+
+function openCatEdit(type, name) {
+  editCatType = type; editingCatName = name;
+  const data = getData();
+  const list = type==='out' ? data.categoriesOut : data.categoriesIn;
+  const c = list.find(x => x.name === name);
+  document.getElementById('editModalBody').innerHTML = `
+    <div class="modal-date-row"><label>图标：</label><input type="text" id="editCatEmoji" value="${c.emoji}" maxlength="2"></div>
+    <div class="modal-date-row"><label>名称：</label><input type="text" id="editCatName" value="${c.name}"></div>
+  `;
+  document.getElementById('editDeleteBtn').style.display = 'block';
+}
+
+function addCategory() {
+  const type = document.getElementById('newCatType').value;
+  const emoji = document.getElementById('newCatEmoji').value || '📌';
+  const name = document.getElementById('newCatName').value.trim();
+  if (!name) { showToast('请输入名称'); return; }
+  const data = getData();
+  const target = type==='out' ? data.categoriesOut : data.categoriesIn;
+  if (target.find(c => c.name === name)) { showToast('类别已存在'); return; }
+  target.push({ name, emoji });
+  setData(data); renderCategories(); editMoneyCategories(); showToast('已添加');
+}
+
+function saveEditItem() {
+  if (document.getElementById('editModalTitle').textContent === '编辑类别') return;
+  if (!editingCatName) return;
+  const emoji = document.getElementById('editCatEmoji').value || '📌';
+  const name = document.getElementById('editCatName').value.trim();
+  if (!name) { showToast('请输入名称'); return; }
+  const data = getData();
+  const target = editCatType==='out' ? data.categoriesOut : data.categoriesIn;
+  const idx = target.findIndex(c => c.name === editingCatName);
+  if (idx >= 0) {
+    if (name !== editingCatName && target.find(c => c.name === name)) { showToast('名称已存在'); return; }
+    target[idx] = { name, emoji };
+    data.records.forEach(r => { if (r.type===editCatType && r.category===editingCatName) { r.category=name; r.emoji=emoji; } });
+    setData(data);
+    renderCategories(); renderRecentList(); editMoneyCategories(); showToast('已保存');
+  }
+}
+
+function deleteEditItem() {
+  if (!editingCatName) return;
+  if (!confirm('确定删除「'+editingCatName+'」吗？\n已记账的数据类别名会变，但不会删除记录')) return;
+  const data = getData();
+  const target = editCatType==='out' ? data.categoriesOut : data.categoriesIn;
+  const idx = target.findIndex(c => c.name === editingCatName);
+  if (idx >= 0) { target.splice(idx, 1); setData(data); renderCategories(); renderRecentList(); editMoneyCategories(); showToast('已删除'); }
+}
+
+function closeEditModal(e) {
+  if (e && e.target !== document.getElementById('editOverlay')) return;
+  document.getElementById('editOverlay').classList.remove('show');
+  editingCatName = null;
+}
+
 // ============= 工具菜单 =============
 function openToolMenu() {
   const m = document.getElementById('toolMenu');
   m.classList.toggle('show');
   document.addEventListener('click', function close(ev) {
     if (!ev.target.closest('.tool-menu') && !ev.target.closest('.header-btn')) {
-      m.classList.remove('show');
-      document.removeEventListener('click', close);
+      m.classList.remove('show'); document.removeEventListener('click', close);
     }
   });
 }
@@ -203,8 +304,7 @@ function exportCSV() {
   const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a'); a.href=url; a.download='记账数据_'+todayStr()+'.csv'; a.click();
-  URL.revokeObjectURL(url);
-  document.getElementById('toolMenu').classList.remove('show');
+  URL.revokeObjectURL(url); document.getElementById('toolMenu').classList.remove('show');
   showToast('📤 导出成功');
 }
 
@@ -226,7 +326,7 @@ function importCSV() {
         const type = cols[1]==='收入'?'in':'out';
         const amount = parseFloat(cols[2]);
         if (isNaN(amount)) continue;
-        const cat = CATEGORIES[type].find(c => c.name===cols[3]);
+        const cat = getCategories(type).find(c => c.name===cols[3]);
         data.records.unshift({ id:generateId(), book, type, amount, category:cols[3], emoji: cat?cat.emoji:'📌', note:cols[4], date:cols[5], time:cols[6] });
         count++;
       }
@@ -260,11 +360,8 @@ function manageMembers() {
     if (!data.members.includes(name)) { data.members.push(name); setData(data); showToast('已添加 '+name); }
     else showToast('成员已存在');
   } else if (cmd==='删除' && name) {
-    data.members = data.members.filter(m => m!==name);
-    setData(data); showToast('已删除 '+name);
-  } else {
-    showToast('格式错误，请输入「添加 名字」');
-  }
+    data.members = data.members.filter(m => m!==name); setData(data); showToast('已删除 '+name);
+  } else showToast('格式错误');
 }
 
 // ============= 经期日历 =============
@@ -288,9 +385,6 @@ function goToday() {
   document.getElementById('periodMonthTitle').textContent = periodYear+'年'+(periodMonth+1)+'月';
   renderCalendar();
 }
-
-const RECORD_LABELS = { color:'颜色', pain:'痛经', love:'爱爱', symptom:'症状', mood:'心情', discharge:'白带', temp:'体温', weight:'体重', medicine:'吃药' };
-const RECORD_EMOJI = { color:'🎨', pain:'⚡', love:'💗', symptom:'💊', mood:'😊', discharge:'🪻', temp:'🌡️', weight:'💜', medicine:'💊' };
 
 function renderCalendar() {
   const data = getData();
@@ -330,8 +424,13 @@ function renderCalendar() {
     const rec = data.periodRecords[dateStr] || {};
     const hasRec = Object.keys(rec).length > 0;
     let icons = '';
-    const iconMap = { love:'💗', mood:rec.mood||'', medicine:'💊', pain:'⚡' };
-    Object.keys(iconMap).forEach(k => { if (iconMap[k] && (k!=='love' || rec[k]===true || rec[k]==='有')) icons += iconMap[k]; });
+    if (hasRec) {
+      data.periodItems.forEach(item => {
+        const v = rec[item.key];
+        if (v === undefined || v === null || v === '' || v === false) return;
+        icons += item.emoji;
+      });
+    }
 
     const isToday = dateStr === today;
     html += `
@@ -362,6 +461,28 @@ function updatePeriodHero() {
   document.getElementById('phChance').textContent = chance + '%';
 }
 
+// ============= 经期项目列表 =============
+function renderPeriodList() {
+  const data = getData();
+  const list = document.getElementById('recordList');
+  const today = todayStr();
+  const rec = data.periodRecords[today] || {};
+
+  list.innerHTML = data.periodItems.map(item => {
+    let v = rec[item.key];
+    if (item.type === 'love') v = v===true || v==='有' ? '有' : (v ? v : '--');
+    else if (item.type === 'mood') v = v || '--';
+    else v = v || '--';
+    return `
+      <li data-key="${item.key}" onclick="openItemModal('${item.key}')">
+        <span class="ri-icon" style="background:${item.color}">${item.emoji}</span>
+        <span class="ri-label">${item.label}</span>
+        <span class="ri-val" id="val-${item.key}">${v}</span>
+        <span class="ri-add">+</span>
+      </li>`;
+  }).join('');
+}
+
 // ============= 每日记录弹窗 =============
 function openDayModal(dateStr) {
   selectedDay = dateStr;
@@ -370,32 +491,26 @@ function openDayModal(dateStr) {
   const rec = data.periodRecords[dateStr] || {};
   const container = document.getElementById('dayRecordsList');
 
-  if (!Object.keys(rec).length) {
-    container.innerHTML = '<div class="day-empty">🌷 这一天还没有记录<br>点击下方按钮添加</div>';
-  } else {
-    container.innerHTML = `
-      <div class="day-record-group"><h4>当日记录</h4>
-      ${Object.entries(rec).map(([k,v]) => `
-        <div class="day-record-item">
-          <span class="dri-icon">${RECORD_EMOJI[k]}</span>
-          <span class="dri-key">${RECORD_LABELS[k]}</span>
-          <span class="dri-val">${k==='love'?(v===true||v==='有'?'有':'无'):v}</span>
-        </div>
-      `).join('')}</div>
-    `;
-  }
-  container.innerHTML += `
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px;">
-      <button class="modal-btn save" onclick="openRecordModal('颜色','🎨','color','${dateStr}')">颜色</button>
-      <button class="modal-btn save" onclick="openRecordModal('痛经','⚡','pain','${dateStr}')">痛经</button>
-      <button class="modal-btn save" onclick="openRecordModal('爱爱','💗','love','${dateStr}')">爱爱</button>
-      <button class="modal-btn save" onclick="openRecordModal('症状','💊','symptom','${dateStr}')">症状</button>
-      <button class="modal-btn save" onclick="openMoodModal('${dateStr}')">心情</button>
-      <button class="modal-btn save" onclick="openRecordModal('白带','🪻','discharge','${dateStr}')">白带</button>
-      <button class="modal-btn save" onclick="openRecordModal('体温','🌡️','temp','${dateStr}')">体温</button>
-      <button class="modal-btn save" onclick="openRecordModal('体重','💜','weight','${dateStr}')">体重</button>
-      <button class="modal-btn save" onclick="openRecordModal('吃药','💊','medicine','${dateStr}')">吃药</button>
-    </div>
+  let recordsHtml = '';
+  data.periodItems.forEach(item => {
+    const v = rec[item.key];
+    if (v === undefined || v === null || v === '' || v === false) return;
+    const show = item.type==='love' ? (v===true||v==='有'?'有':'无') : v;
+    recordsHtml += `
+      <div class="day-record-item" onclick="openItemModal('${item.key}','${dateStr}')">
+        <span class="dri-icon">${item.emoji}</span>
+        <span class="dri-key">${item.label}</span>
+        <span class="dri-val">${show}</span>
+      </div>`;
+  });
+
+  let buttonsHtml = data.periodItems.map(item => `
+    <button class="modal-btn save" onclick="openItemModal('${item.key}','${dateStr}')">${item.emoji} ${item.label}</button>
+  `).join('');
+
+  container.innerHTML = `
+    ${recordsHtml ? `<div class="day-record-group"><h4>当日记录</h4>${recordsHtml}</div>` : '<div class="day-empty">🌷 这一天还没有记录</div>'}
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px;">${buttonsHtml}</div>
   `;
   document.getElementById('dayOverlay').classList.add('show');
 }
@@ -407,40 +522,44 @@ function closeDayModal(e) {
 
 // ============= 记录弹窗 =============
 let currentRecordKey = null;
+let currentRecordDate = todayStr();
 
-function openRecordModal(title, emoji, key, dateStr) {
+function openItemModal(key, dateStr) {
   currentRecordKey = key;
-  if (dateStr) selectedDay = dateStr;
-  document.getElementById('modalTitle').textContent = emoji + ' ' + title;
+  currentRecordDate = dateStr || selectedDay || todayStr();
+  const data = getData();
+  const item = data.periodItems.find(i => i.key === key);
+  if (!item) return;
+
+  document.getElementById('modalTitle').textContent = item.emoji + ' ' + item.label;
   const body = document.getElementById('modalBody');
 
-  const placeholders = {
-    color:'如：鲜红、暗红、褐色', pain:'如：无痛、轻度、中度、严重',
-    love:'', symptom:'如：头痛、腹痛、乳房胀痛',
-    discharge:'如：正常、增多、异常', temp:'如：36.5℃',
-    weight:'如：60.8kg', medicine:'如：维生素、布洛芬、叶酸'
-  };
+  if (item.type === 'mood') {
+    // 心情弹窗
+    document.getElementById('moodDateInput').value = currentRecordDate;
+    selectedMood = null;
+    document.querySelectorAll('.mood-opt').forEach(m => m.classList.remove('active'));
+    document.getElementById('moodOverlay').classList.add('show');
+    return;
+  }
 
-  let inputHtml = '';
-  if (key === 'love') {
-    inputHtml = `
-      <div class="modal-date-row"><label>日期：</label><input type="date" id="recordDateInput" value="${selectedDay || todayStr()}"></div>
-      <div style="display:flex;gap:10px;">
-        <button type="button" id="loveYes" onclick="setLoveValue(true)" style="flex:1;padding:12px;border:1.5px solid var(--primary-light);border-radius:12px;background:#fff;">有</button>
-        <button type="button" id="loveNo" onclick="setLoveValue(false)" style="flex:1;padding:12px;border:1.5px solid var(--primary-light);border-radius:12px;background:#fff;">无</button>
+  let inputHtml = `<div class="modal-date-row"><label>日期：</label><input type="date" id="recordDateInput" value="${currentRecordDate}"></div>`;
+  if (item.type === 'love') {
+    inputHtml += `
+      <div style="display:flex;gap:10px;margin-top:8px;">
+        <button type="button" id="loveYes" onclick="setLoveValue(true)" style="flex:1;padding:12px;border:1.5px solid var(--primary-light);border-radius:12px;background:#fff;font-size:15px;">有</button>
+        <button type="button" id="loveNo" onclick="setLoveValue(false)" style="flex:1;padding:12px;border:1.5px solid var(--primary-light);border-radius:12px;background:#fff;font-size:15px;">无</button>
       </div>
-      <input type="hidden" id="recordValInput">
-    `;
+      <input type="hidden" id="recordValInput">`;
   } else {
-    inputHtml = `
-      <div class="modal-date-row"><label>日期：</label><input type="date" id="recordDateInput" value="${selectedDay || todayStr()}"></div>
-      <input type="text" id="recordValInput" placeholder="${placeholders[key] || '请输入'}" style="width:100%;padding:10px;border:1.5px solid var(--primary-light);border-radius:10px;font-size:14px;">
-    `;
+    const ph = { color:'如：鲜红、暗红、褐色', pain:'如：无痛、轻度、中度、严重', symptom:'如：头痛、腹痛、乳房胀痛',
+                 discharge:'如：正常、增多、异常', temp:'如：36.5℃', weight:'如：60.8kg', medicine:'如：维生素、布洛芬、叶酸' };
+    inputHtml += `<input type="text" id="recordValInput" placeholder="${ph[key] || '请输入'}" style="width:100%;margin-top:8px;padding:10px;border:1.5px solid var(--primary-light);border-radius:10px;font-size:14px;">`;
   }
 
   body.innerHTML = inputHtml;
   document.getElementById('modalOverlay').classList.add('show');
-  if (key==='love') setTimeout(() => setLoveValue(true), 50);
+  if (item.type === 'love') setTimeout(() => setLoveValue(true), 50);
 }
 
 function setLoveValue(val) {
@@ -455,17 +574,20 @@ function savePeriodRecord() {
   const date = document.getElementById('recordDateInput').value;
   const val = document.getElementById('recordValInput').value;
   if (!date) { showToast('请选择日期'); return; }
-  if (currentRecordKey === 'love' && !val) { showToast('请选择有无'); return; }
-  if (currentRecordKey !== 'love' && !val) { showToast('请输入内容'); return; }
 
   const data = getData();
+  const item = data.periodItems.find(i => i.key === currentRecordKey);
+  if (!item) return;
+  if (item.type === 'love' && !val) { showToast('请选择有无'); return; }
+  if (item.type !== 'love' && item.type !== 'mood' && !val) { showToast('请输入内容'); return; }
+
   if (!data.periodRecords[date]) data.periodRecords[date] = {};
-  data.periodRecords[date][currentRecordKey] = currentRecordKey==='love' ? (val==='有'?true:false) : val;
+  data.periodRecords[date][currentRecordKey] = item.type==='love' ? (val==='有'?true:false) : val;
   setData(data);
 
   closeModal();
   renderCalendar();
-  updatePeriodRecordVals();
+  renderPeriodList();
   if (document.getElementById('dayOverlay').classList.contains('show')) openDayModal(date);
   showToast('✓ 已保存');
 }
@@ -477,13 +599,6 @@ function closeModal(e) {
 
 // ============= 心情弹窗 =============
 let selectedMood = null;
-function openMoodModal(dateStr) {
-  selectedMood = null;
-  if (dateStr) selectedDay = dateStr;
-  document.getElementById('moodDateInput').value = selectedDay || todayStr();
-  document.querySelectorAll('.mood-opt').forEach(m => m.classList.remove('active'));
-  document.getElementById('moodOverlay').classList.add('show');
-}
 function selectMood(mood) { selectedMood = mood; document.querySelectorAll('.mood-opt').forEach(m => m.classList.remove('active')); document.querySelector(`.mood-opt[data-mood="${mood}"]`).classList.add('active'); }
 function saveMoodRecord() {
   if (!selectedMood) { showToast('请选择一个心情'); return; }
@@ -494,7 +609,7 @@ function saveMoodRecord() {
   data.periodRecords[date]['mood'] = selectedMood;
   setData(data);
   document.getElementById('moodOverlay').classList.remove('show');
-  renderCalendar(); updatePeriodRecordVals();
+  renderCalendar(); renderPeriodList();
   if (document.getElementById('dayOverlay').classList.contains('show')) openDayModal(date);
   showToast('✓ 心情已保存');
 }
@@ -503,15 +618,118 @@ function closeMoodModal(e) {
   document.getElementById('moodOverlay').classList.remove('show');
 }
 
-function updatePeriodRecordVals() {
-  const data = getData(); const rec = data.periodRecords[todayStr()] || {};
-  ['color','pain','love','symptom','mood','discharge','temp','weight','medicine'].forEach(k => {
-    const el = document.getElementById('val-'+k); if (!el) return;
-    let v = rec[k];
-    if (k==='love') v = v===true || v==='有' ? '有' : (v ? v : '--');
-    else if (v===undefined || v===null || v==='') v = '--';
-    el.textContent = v;
-  });
+// ============= 编辑经期项目 =============
+let editingPeriodKey = null;
+
+function editPeriodItems() {
+  const data = getData();
+  const itemsHtml = data.periodItems.map(item => `
+    <div class="edit-period-row" onclick="openPeriodItemEdit('${item.key}')">
+      <span>${item.emoji} ${item.label}</span>
+      <span>${item.type==='text'?'文字':(item.type==='love'?'有/无':'心情')}</span>
+    </div>
+  `).join('');
+
+  document.getElementById('editModalTitle').textContent = '编辑经期项目';
+  document.getElementById('editModalBody').innerHTML = `
+    <div style="margin-bottom:12px;">${itemsHtml}</div>
+    <div class="edit-add-row">
+      <input type="text" id="newPeriodEmoji" placeholder="图标" maxlength="2">
+      <input type="text" id="newPeriodLabel" placeholder="名称">
+      <select id="newPeriodType"><option value="text">文字</option><option value="love">有/无</option><option value="mood">心情</option></select>
+      <button class="modal-btn save" style="flex:0 0 auto;" onclick="addPeriodItem()">添加</button>
+    </div>
+  `;
+  document.getElementById('editDeleteBtn').style.display = 'none';
+  document.getElementById('editOverlay').classList.add('show');
+}
+
+function openPeriodItemEdit(key) {
+  editingPeriodKey = key;
+  const data = getData();
+  const item = data.periodItems.find(i => i.key === key);
+  document.getElementById('editModalBody').innerHTML = `
+    <div class="modal-date-row"><label>图标：</label><input type="text" id="editPeriodEmoji" value="${item.emoji}" maxlength="2"></div>
+    <div class="modal-date-row"><label>名称：</label><input type="text" id="editPeriodLabel" value="${item.label}"></div>
+    <div class="modal-date-row"><label>类型：</label>
+      <select id="editPeriodType" style="flex:1;padding:8px 12px;border:1.5px solid var(--primary-light);border-radius:10px;background:#faf8ff;">
+        <option value="text" ${item.type==='text'?'selected':''}>文字</option>
+        <option value="love" ${item.type==='love'?'selected':''}>有/无</option>
+        <option value="mood" ${item.type==='mood'?'selected':''}>心情</option>
+      </select>
+    </div>
+  `;
+  document.getElementById('editDeleteBtn').style.display = 'block';
+}
+
+function addPeriodItem() {
+  const emoji = document.getElementById('newPeriodEmoji').value || '📌';
+  const label = document.getElementById('newPeriodLabel').value.trim();
+  const type = document.getElementById('newPeriodType').value;
+  if (!label) { showToast('请输入名称'); return; }
+  const data = getData();
+  const key = 'p_' + generateId();
+  if (data.periodItems.find(i => i.label === label)) { showToast('项目已存在'); return; }
+  data.periodItems.push({ key, label, emoji, color: '#f3e8ff', type });
+  setData(data); renderPeriodList(); renderCalendar(); editPeriodItems(); showToast('已添加');
+}
+
+function saveEditItem() {
+  const title = document.getElementById('editModalTitle').textContent;
+  if (title === '编辑经期项目') {
+    if (!editingPeriodKey) return;
+    const emoji = document.getElementById('editPeriodEmoji').value || '📌';
+    const label = document.getElementById('editPeriodLabel').value.trim();
+    const type = document.getElementById('editPeriodType').value;
+    if (!label) { showToast('请输入名称'); return; }
+    const data = getData();
+    const item = data.periodItems.find(i => i.key === editingPeriodKey);
+    if (item) {
+      if (label !== item.label && data.periodItems.find(i => i.label === label)) { showToast('名称已存在'); return; }
+      item.emoji = emoji; item.label = label; item.type = type;
+      setData(data); renderPeriodList(); renderCalendar(); editPeriodItems(); showToast('已保存');
+    }
+  } else if (title === '编辑类别') {
+    if (!editingCatName) return;
+    const emoji = document.getElementById('editCatEmoji').value || '📌';
+    const name = document.getElementById('editCatName').value.trim();
+    if (!name) { showToast('请输入名称'); return; }
+    const data = getData();
+    const target = editCatType==='out' ? data.categoriesOut : data.categoriesIn;
+    const idx = target.findIndex(c => c.name === editingCatName);
+    if (idx >= 0) {
+      if (name !== editingCatName && target.find(c => c.name === name)) { showToast('名称已存在'); return; }
+      target[idx] = { name, emoji };
+      data.records.forEach(r => { if (r.type===editCatType && r.category===editingCatName) { r.category=name; r.emoji=emoji; } });
+      setData(data); renderCategories(); renderRecentList(); editMoneyCategories(); showToast('已保存');
+    }
+  }
+}
+
+function deleteEditItem() {
+  const title = document.getElementById('editModalTitle').textContent;
+  if (title === '编辑经期项目') {
+    if (!editingPeriodKey) return;
+    const data = getData();
+    data.periodItems = data.periodItems.filter(i => i.key !== editingPeriodKey);
+    Object.keys(data.periodRecords).forEach(date => {
+      delete data.periodRecords[date][editingPeriodKey];
+      if (Object.keys(data.periodRecords[date]).length === 0) delete data.periodRecords[date];
+    });
+    setData(data); renderPeriodList(); renderCalendar(); editPeriodItems(); showToast('已删除');
+  } else if (title === '编辑类别') {
+    if (!editingCatName) return;
+    const data = getData();
+    const target = editCatType==='out' ? data.categoriesOut : data.categoriesIn;
+    const idx = target.findIndex(c => c.name === editingCatName);
+    if (idx >= 0) { target.splice(idx, 1); setData(data); renderCategories(); renderRecentList(); editMoneyCategories(); showToast('已删除'); }
+  }
+}
+
+function closeEditModal(e) {
+  if (e && e.target !== document.getElementById('editOverlay')) return;
+  document.getElementById('editOverlay').classList.remove('show');
+  editingCatName = null; editingPeriodKey = null;
 }
 
 // ============= 启动 =============
@@ -524,7 +742,9 @@ function showSplash() {
 
 function initApp() {
   const data = getData();
-  currentBook = 'all'; currentType = 'out'; currentCategory = '餐饮'; currentAmount = '0';
+  currentBook = 'all'; currentType = 'out'; currentAmount = '0';
+  const cats = getCategories('out');
+  currentCategory = cats[0].name;
   recordDate = todayStr();
   document.getElementById('recordDateInput').value = recordDate;
   document.getElementById('dateText').textContent = formatDateCN(recordDate);
@@ -544,7 +764,7 @@ function initApp() {
     if (clean) { currentAmount = clean; document.getElementById('amountDisplay').textContent = clean; }
   });
 
-  updatePeriodHero(); updatePeriodRecordVals();
+  updatePeriodHero(); renderPeriodList();
 }
 
 document.addEventListener('DOMContentLoaded', showSplash);
