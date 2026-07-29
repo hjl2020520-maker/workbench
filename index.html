@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="工作台">
+<meta name="theme-color" content="#fde4ec">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="icon" href="icon.svg">
+<link rel="manifest" href="manifest.json">
+<title>工作台</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- 启动封面 -->
+<div class="splash-screen" id="splashScreen">
+  <div class="splash-bg"></div>
+  <div class="splash-content">
+    <div class="splash-image-wrap">
+      <img src="cover.jpg" alt="cover" class="splash-image">
+      <div class="splash-sparkle s1">✨</div>
+      <div class="splash-sparkle s2">✨</div>
+      <div class="splash-sparkle s3">✨</div>
+    </div>
+    <div class="splash-title">工作台</div>
+    <div class="splash-subtitle">记录生活的每一刻小美好</div>
+    <div class="splash-loader">
+      <span></span><span></span><span></span>
+    </div>
+  </div>
+</div>
+
+<!-- 状态栏 -->
+<div class="status-bar">
+  <span class="time" id="statusTime">17:49</span>
+  <span class="status-icons">
+    <span class="signal">📶</span>
+    <span class="wifi">📡</span>
+    <span class="battery">40</span>
+  </span>
+</div>
+
+<!-- ============ 存钱页 ============ -->
+<main class="tab-page active" id="page-money">
+
+  <header class="page-header">
+    <button class="header-back">‹</button>
+    <h1>家庭记账本</h1>
+    <div class="header-right">
+      <button class="header-btn">⋯</button>
+      <button class="header-btn">◎</button>
+    </div>
+  </header>
+
+  <!-- 工具按钮 -->
+  <div class="tool-row">
+    <button class="tool-btn"><span class="tool-icon">📤</span><span>导出</span></button>
+    <button class="tool-btn"><span class="tool-icon">📥</span><span>导入</span></button>
+    <button class="tool-btn"><span class="tool-icon">👤</span><span>成员</span></button>
+  </div>
+
+  <!-- 顶部粉色汇总卡片 -->
+  <section class="money-summary-card">
+    <div class="msc-bg-heart">♡</div>
+    <div class="msc-title">
+      <span class="msc-emoji">🏠</span>
+      <span>我们家的记账本</span>
+      <span class="msc-heart">♡</span>
+    </div>
+    <div class="msc-subtitle">一家人在一起的每一笔小日子 ❀</div>
+    <div class="msc-stats">
+      <div class="msc-stat">
+        <div class="msc-label">总收入</div>
+        <div class="msc-value">¥<span id="totalIn">0.00</span></div>
+      </div>
+      <div class="msc-stat">
+        <div class="msc-label">总支出</div>
+        <div class="msc-value">¥<span id="totalOut">0.00</span></div>
+      </div>
+      <div class="msc-stat">
+        <div class="msc-label">结余</div>
+        <div class="msc-value">¥<span id="balance">0.00</span></div>
+      </div>
+      <div class="msc-stat">
+        <div class="msc-label">笔数</div>
+        <div class="msc-value"><span id="count">0</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 账本切换 -->
+  <div class="account-row">
+    <button class="account-pill active">
+      <span class="ap-emoji" style="background:#fff3a8">📔</span>
+      <span>总账</span>
+    </button>
+    <button class="account-pill">
+      <span class="ap-emoji" style="background:#ffb3cd">家</span>
+      <span>家庭开销</span>
+    </button>
+    <button class="account-pill">
+      <span class="ap-emoji" style="background:#7ed99a">哥</span>
+      <span>哥哥</span>
+    </button>
+    <button class="account-pill">
+      <span class="ap-emoji" style="background:#ffd57e">弟</span>
+      <span>弟弟</span>
+    </button>
+  </div>
+
+  <!-- 表单卡片 -->
+  <section class="form-card">
+    <!-- 支出/收入切换 -->
+    <div class="type-toggle">
+      <button class="tt-btn active" data-type="out" onclick="switchType('out')">
+        <span>💸</span><span>支出</span>
+      </button>
+      <button class="tt-btn" data-type="in" onclick="switchType('in')">
+        <span>💰</span><span>收入</span>
+      </button>
+    </div>
+
+    <!-- 金额 -->
+    <div class="amount-row">
+      <div class="amount-display">¥<span id="amountDisplay">0</span></div>
+      <button class="clear-btn" onclick="clearAmount()">清零</button>
+    </div>
+
+    <!-- 类别网格 -->
+    <div class="category-grid" id="categoryGrid"></div>
+
+    <!-- 备注+日期 -->
+    <div class="meta-row">
+      <div class="meta-cell note">
+        <span>📝</span>
+        <input type="text" id="noteInput" placeholder="备注(可选)">
+      </div>
+      <div class="meta-cell date" id="dateCell">
+        <span id="dateText">2026年7月28日</span>
+      </div>
+    </div>
+
+    <!-- 记一笔 -->
+    <button class="save-btn" onclick="saveRecord()">✓ 记一笔</button>
+  </section>
+
+  <!-- 最近的小账本 -->
+  <section class="recent-card">
+    <div class="recent-header">
+      <span><span class="recent-flower">🌸</span> 最近的小账本</span>
+      <div class="recent-filter">
+        <button class="rf-pill active">全部</button>
+        <button class="rf-pill">收入</button>
+        <button class="rf-pill">支出</button>
+      </div>
+    </div>
+    <div class="recent-empty" id="recentEmpty">
+      <div class="recent-tulip">🌷</div>
+      <div class="recent-text">还没有记录哦</div>
+      <div class="recent-tip">快给家里记第一笔小账吧 ���</div>
+    </div>
+    <ul class="recent-list" id="recentList"></ul>
+  </section>
+
+</main>
+
+<!-- ============ 经期页 ============ -->
+<main class="tab-page" id="page-period">
+
+  <header class="page-header">
+    <button class="header-back">‹</button>
+    <h1>7月</h1>
+    <button class="header-btn">📊<sup class="badge">2</sup><br><span class="hb-sub">分析</span></button>
+  </header>
+
+  <!-- Tab 切换 -->
+  <nav class="period-tabs">
+    <button class="pt-btn active">经期</button>
+    <button class="pt-btn">备孕</button>
+    <button class="pt-btn">怀孕</button>
+    <button class="pt-btn">育儿</button>
+  </nav>
+
+  <!-- 顶部粉色大卡片 -->
+  <section class="period-hero">
+    <div class="ph-content">
+      <div class="ph-title" id="phTitle">经期第 1 天</div>
+      <div class="ph-sub">预测结束日 <span id="phEndDate">8月3日</span> ›</div>
+      <button class="ph-detail-btn" onclick="showToast('查看详情')">查看详情</button>
+    </div>
+    <div class="ph-flower">
+      <div class="ph-flower-label">今日怀孕几率</div>
+      <div class="ph-flower-value" id="phChance">3.2%</div>
+    </div>
+  </section>
+
+  <!-- 日历 -->
+  <section class="calendar-card">
+    <div class="cal-weekdays">
+      <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
+    </div>
+    <div class="cal-grid" id="calGrid"></div>
+    <div class="cal-legend">
+      <span><i class="dot period"></i>月经期</span>
+      <span><i class="dot predict"></i>预测经期</span>
+      <span><i class="dot oval"></i>排卵期</span>
+      <span><i class="dot oval-day"></i>排卵日</span>
+      <span class="cal-arrow">›</span>
+    </div>
+  </section>
+
+  <!-- 记录列表 -->
+  <section class="record-card">
+    <ul class="record-list">
+      <li onclick="showToast('颜色')">
+        <span class="ri-icon pink-icon">🎨</span>
+        <span class="ri-label">颜色</span>
+        <span class="ri-add">+</span>
+      </li>
+      <li onclick="showToast('痛经')">
+        <span class="ri-icon red-icon">⚡</span>
+        <span class="ri-label">痛经</span>
+        <span class="ri-add">+</span>
+      </li>
+      <li onclick="showToast('爱爱')">
+        <span class="ri-icon heart-icon">💗</span>
+        <span class="ri-label">爱爱</span>
+        <span class="ri-add">+</span>
+      </li>
+      <li onclick="showToast('症状')">
+        <span class="ri-icon blue-icon">💊</span>
+        <span class="ri-label">症状</span>
+        <span class="ri-add">+</span>
+      </li>
+      <li class="mood-row" onclick="showToast('心情')">
+        <span class="ri-icon yellow-icon">😊</span>
+        <span class="ri-label">心情</span>
+        <span class="mood-list">
+          <span>😀</span><span>😐</span><span>😨</span><span>😩</span><span>😣</span>
+        </span>
+        <span class="ri-add">+</span>
+      </li>
+      <li onclick="showToast('白带')">
+        <span class="ri-icon purple-icon">🪻</span>
+        <span class="ri-label">白带</span>
+        <span class="ri-add">+</span>
+      </li>
+      <li onclick="showToast('体温')">
+        <span class="ri-icon teal-icon">🌡️</span>
+        <span class="ri-label">体温</span>
+        <span class="ri-add">+</span>
+      </li>
+      <li onclick="showToast('体重')">
+        <span class="ri-icon purple2-icon">💜</span>
+        <span class="ri-label">体重</span>
+        <span class="ri-add">+</span>
+      </li>
+      <li onclick="showToast('吃药')">
+        <span class="ri-icon pill-icon">💊</span>
+        <span class="ri-label">吃药</span>
+        <span class="ri-add">+</span>
+      </li>
+    </ul>
+  </section>
+
+</main>
+
+<!-- ============ 底部 Tab Bar ============ -->
+<nav class="tab-bar">
+  <button class="tab-item active" data-tab="money" onclick="switchTab('money')">
+    <div class="tab-icon-wrap money-icon-circle">
+      <span class="tab-zh">支</span>
+    </div>
+    <span class="tab-label">存钱</span>
+  </button>
+  <button class="tab-item" data-tab="period" onclick="switchTab('period')">
+    <div class="tab-icon-wrap">
+      <span class="tab-emoji">🌷</span>
+    </div>
+    <span class="tab-label">经期</span>
+  </button>
+</nav>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- 添加主屏幕提示 -->
+<div class="add-homescreen" id="addHomescreen">
+  <div class="ah-inner">
+    <span>💜 添加到主屏幕，像 App 一样使用</span>
+    <button onclick="document.getElementById('addHomescreen').style.display='none'">×</button>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

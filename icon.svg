@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 180">
+  <defs>
+    <radialGradient id="wingGrad" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#fff5f8"/>
+      <stop offset="50%" stop-color="#ffb3cd"/>
+      <stop offset="100%" stop-color="#ff7eb3"/>
+    </radialGradient>
+    <radialGradient id="wingGrad2" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#fff5f8"/>
+      <stop offset="50%" stop-color="#ffc4d9"/>
+      <stop offset="100%" stop-color="#ff8fb8"/>
+    </radialGradient>
+  </defs>
+  <rect width="200" height="180" fill="#fde4ec"/>
+  <ellipse cx="60" cy="60" rx="45" ry="35" fill="url(#wingGrad)" stroke="#ff5c8a" stroke-width="2.5" transform="rotate(-25 60 60)"/>
+  <ellipse cx="140" cy="60" rx="45" ry="35" fill="url(#wingGrad)" stroke="#ff5c8a" stroke-width="2.5" transform="rotate(25 140 60)"/>
+  <ellipse cx="55" cy="115" rx="35" ry="28" fill="url(#wingGrad2)" stroke="#ff5c8a" stroke-width="2.5" transform="rotate(-15 55 115)"/>
+  <ellipse cx="145" cy="115" rx="35" ry="28" fill="url(#wingGrad2)" stroke="#ff5c8a" stroke-width="2.5" transform="rotate(15 145 115)"/>
+  <circle cx="55" cy="55" r="6" fill="#7ee5d5"/>
+  <circle cx="145" cy="55" r="6" fill="#7ee5d5"/>
+  <circle cx="60" cy="120" r="4" fill="#7ee5d5"/>
+  <circle cx="140" cy="120" r="4" fill="#7ee5d5"/>
+  <ellipse cx="100" cy="95" rx="6" ry="45" fill="#ff5c8a"/>
+  <path d="M 95 55 Q 85 35 80 30" stroke="#ff5c8a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <path d="M 105 55 Q 115 35 120 30" stroke="#ff5c8a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <circle cx="80" cy="30" r="2.5" fill="#ff5c8a"/>
+  <circle cx="120" cy="30" r="2.5" fill="#ff5c8a"/>
+</svg>

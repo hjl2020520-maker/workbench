@@ -1,0 +1,18 @@
+{
+  "name": "工作台",
+  "short_name": "工作台",
+  "description": "紫色梦幻公主风个人工作台",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f7f3ff",
+  "theme_color": "#9b7edc",
+  "icons": [
+    {
+      "src": "cover.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ]
+}
