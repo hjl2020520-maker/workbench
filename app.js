@@ -482,11 +482,39 @@ let periodSelectStart = null; // 经期起点选择
 function selectCalendarDay(dateStr) {
   const data = getData();
 
-  // 如果没有经期起点选中，记录起点
+  // 如果没有经期起点选中
   if (!periodSelectStart) {
+    // 检查是否点击在已有经期范围内，如果是则取消经期
+    if (data.periodStart && dateStr >= data.periodStart && dateStr <= addDays(data.periodStart, data.periodLength - 1)) {
+      data.periodStart = null;
+      data.periodLength = 5;
+      setData(data);
+      periodSelectStart = null;
+      selectedDay = dateStr;
+      renderCalendar();
+      renderPeriodList();
+      renderDayPreview();
+      updatePeriodHero();
+      showToast('已取消经期记录');
+      return;
+    }
     periodSelectStart = dateStr;
+    selectedDay = dateStr;
     renderCalendar();
-    showToast('已选起点：' + formatDateShort(dateStr) + '，再点一天设终点');
+    renderPeriodList();
+    renderDayPreview();
+    showToast('起点：' + formatDateShort(dateStr) + '，再点一天设终点');
+    return;
+  }
+
+  // 点击同一天=取消选择
+  if (dateStr === periodSelectStart) {
+    periodSelectStart = null;
+    selectedDay = dateStr;
+    renderCalendar();
+    renderPeriodList();
+    renderDayPreview();
+    showToast('已取消选择');
     return;
   }
 
