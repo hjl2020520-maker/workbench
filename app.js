@@ -228,7 +228,7 @@ function bindSwipeDelete(container) {
     const item = wrap.querySelector('.rl-item');
     let sx=0,sw=false;
     item.addEventListener('touchstart', e => { sx=e.touches[0].clientX; sw=false; });
-    item.addEventListener('touchmove', e => { const dx=e.touches[0].clientX-sx; if(dx>25&&!sw){item.classList.add('swiped');sw=true;} if(dx<-25&&sw){item.classList.remove('swiped');sw=false;} });
+    item.addEventListener('touchmove', e => { const dx=e.touches[0].clientX-sx; if(dx<-25&&!sw){item.classList.add('swiped');sw=true;} if(dx>25&&sw){item.classList.remove('swiped');sw=false;} });
     document.addEventListener('click', ev => { if(!wrap.contains(ev.target)&&item.classList.contains('swiped')) item.classList.remove('swiped'); });
   });
 }
@@ -606,8 +606,8 @@ function bindPeriodItemSwipe(container) {
     item.addEventListener('touchstart', e => { sx=e.touches[0].clientX; sw=false; });
     item.addEventListener('touchmove', e => {
       const dx = e.touches[0].clientX - sx;
-      if (dx > 40 && !sw) { item.classList.add('swiped'); sw = true; }
-      if (dx < -40 && sw) { item.classList.remove('swiped'); sw = false; }
+      if (dx < -40 && !sw) { item.classList.add('swiped'); sw = true; }
+      if (dx > 40 && sw) { item.classList.remove('swiped'); sw = false; }
     });
     document.addEventListener('click', ev => { if (!wrap.contains(ev.target) && item.classList.contains('swiped')) item.classList.remove('swiped'); });
   });
