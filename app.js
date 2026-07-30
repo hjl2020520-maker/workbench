@@ -633,6 +633,16 @@ function openItemModal(key, dateStr) {
   const ph = { color:'如：鲜红、暗红、褐色', pain:'如：无痛、轻度、中度、严重', symptom:'如：头痛、腹痛、乳房胀痛',
                discharge:'如：正常、增多、异常', temp:'如：36.5℃', weight:'如：60.8kg', medicine:'如：维生素、布洛芬、叶酸' };
 
+  const quickOptions = {
+    color: ['鲜红','暗红','褐色','粉色','黑色'],
+    pain: ['无痛','轻度','中度','严重'],
+    symptom: ['头痛','腹痛','乳房胀痛','腰酸','乏力','恶心'],
+    discharge: ['正常','增多','减少','异常'],
+    temp: ['36.0','36.3','36.5','36.8','37.0','37.3'],
+    weight: ['50.0','55.0','60.0','65.0','70.0'],
+    medicine: ['维生素','布洛芬','叶酸','止痛药','感冒药']
+  };
+
   let inputHtml = `<div class="modal-date-row"><label>日期：</label><input type="date" id="recordDateInput" value="${currentRecordDate}"></div>`;
 
   if (item.type === 'love') {
@@ -643,12 +653,26 @@ function openItemModal(key, dateStr) {
       </div>
       <input type="hidden" id="recordValInput">`;
   } else {
-    inputHtml += `<input type="text" id="recordValInput" placeholder="${ph[key] || '请输入'}" style="width:100%;margin-top:12px;padding:10px;border:1.5px solid var(--primary-light);border-radius:10px;font-size:14px;">`;
+    const opts = quickOptions[key] || [];
+    let optsHtml = '';
+    if (opts.length) {
+      optsHtml = `<div style="display:flex;flex-wrap:wrap;gap:8px;margin:10px 0;">
+        ${opts.map(o => `<button type="button" class="quick-opt-btn" onclick="setRecordVal('${o.replace(/'/g,'\\\'')}')">${o}</button>`).join('')}
+      </div>`;
+    }
+    inputHtml += optsHtml + `<input type="text" id="recordValInput" placeholder="${ph[key] || '请输入'}" style="width:100%;padding:10px;border:1.5px solid var(--primary-light);border-radius:10px;font-size:14px;">`;
   }
 
   body.innerHTML = inputHtml;
   document.getElementById('modalOverlay').classList.add('show');
   if (item.type === 'love') setTimeout(() => setLoveValue(true), 50);
+}
+
+function setRecordVal(val) {
+  const input = document.getElementById('recordValInput');
+  input.value = val;
+  input.style.background = 'var(--primary-light)';
+  setTimeout(() => input.style.background = '#fff', 200);
 }
 
 function setLoveValue(val) {
