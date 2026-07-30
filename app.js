@@ -403,6 +403,7 @@ function changeMonth(n) {
   periodMonth += n;
   if (periodMonth < 0) { periodMonth = 11; periodYear--; }
   if (periodMonth > 11) { periodMonth = 0; periodYear++; }
+  periodSelectStart = null;
   document.getElementById('yearLabel').textContent = periodYear;
   document.getElementById('periodMonthTitle').textContent = periodYear+'年'+(periodMonth+1)+'月';
   renderCalendar();
@@ -463,8 +464,9 @@ function renderCalendar() {
 
     const isToday = dateStr === today;
     const isSelected = dateStr === selectedDay;
+    const isStartSel = dateStr === periodSelectStart;
     html += `
-      <div class="cal-day ${cls} ${isToday?'today':''} ${isSelected?'selected':''} ${hasRec?'has-record':''}" onclick="selectCalendarDay('${dateStr}')">
+      <div class="cal-day ${cls} ${isToday?'today':''} ${isSelected?'selected':''} ${isStartSel?'start-sel':''} ${hasRec?'has-record':''}" onclick="selectCalendarDay('${dateStr}')">
         <span class="cal-date">${d}</span>
         ${mark ? `<span style="font-size:8px;position:absolute;top:0">${mark}</span>` : ''}
         ${icons ? `<span class="cal-icons">${icons}</span>` : ''}
@@ -475,11 +477,35 @@ function renderCalendar() {
   document.getElementById('yearLabel').textContent = periodYear;
 }
 
+let periodSelectStart = null; // 经期起点选择
+
 function selectCalendarDay(dateStr) {
+  const data = getData();
+
+  // 如果没有经期起点选中，记录起点
+  if (!periodSelectStart) {
+    periodSelectStart = dateStr;
+    renderCalendar();
+    showToast('已选起点：' + formatDateShort(dateStr) + '，再点一天设终点');
+    return;
+  }
+
+  // 已选了起点，现在选终点
+  let start = periodSelectStart;
+  let end = dateStr;
+  if (end < start) { const tmp = start; start = end; end = tmp; }
+
+  data.periodStart = start;
+  data.periodLength = diffDays(start, end) + 1;
+  setData(data);
+
+  periodSelectStart = null;
   selectedDay = dateStr;
   renderCalendar();
   renderPeriodList();
   renderDayPreview();
+  updatePeriodHero();
+  showToast('✓ 经期：' + formatDateShort(start) + ' ~ ' + formatDateShort(end) + '（共' + data.periodLength + '天）');
 }
 
 function renderDayPreview() {

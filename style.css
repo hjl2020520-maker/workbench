@@ -189,14 +189,14 @@ html, body {
 .cal-day { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 10px; font-size: 14px; color: #333; position: relative; cursor: pointer; min-height: 42px; }
 .cal-day.today { font-weight: 800; border: 1.5px dashed var(--primary); }
 .cal-day.selected { background: var(--primary-light); border: 2px solid var(--primary); font-weight: 800; }
+.cal-day.start-sel { border: 2px dashed var(--primary); font-weight: 800; }
 .cal-day .cal-icons { position: absolute; bottom: 1px; font-size: 8px; display: flex; gap: 1px; flex-wrap: wrap; justify-content: center; max-width: 95%; }
 
 .period-item-wrap { position: relative; overflow: hidden; border-bottom: 1px solid #f5f5f5; }
 .period-item-wrap:last-child { border-bottom: none; }
-.period-item { display: flex; align-items: center; padding: 14px 0; cursor: pointer; background: #fff; transition: transform 0.25s ease; position: relative; z-index: 2; transform: translateX(0); }
+.period-item { display: flex; align-items: center; padding: 10px 0; cursor: pointer; background: #fff; transition: transform 0.25s ease; position: relative; z-index: 2; transform: translateX(0); }
 .period-item.swiped { transform: translateX(-72px); }
-.period-delete-btn { position: absolute; right: -72px; top: 0; bottom: 0; width: 72px; background: var(--danger); color: #fff; border: none; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; cursor: pointer; z-index: 1; transition: right 0.25s ease; }
-.period-item.swiped + .period-delete-btn { right: 0; }
+.period-delete-btn { position: absolute; right: 0; top: 0; bottom: 0; width: 72px; background: var(--danger); color: #fff; border: none; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; cursor: pointer; z-index: 1; }
 
 .quick-opt-btn { background: #f7f3ff; border: 1.5px solid #e6dcff; border-radius: 18px; padding: 10px 16px; font-size: 14px; color: var(--primary-dark); cursor: pointer; font-weight: 500; transition: all 0.15s; }
 .quick-opt-btn:active { background: var(--primary); color: #fff; border-color: var(--primary); }
