@@ -483,15 +483,24 @@ function renderPeriodList() {
 
   list.innerHTML = data.periodItems.map(item => {
     let v = rec[item.key];
-    if (item.type === 'love') v = v===true || v==='有' ? '有' : (v ? v : '--');
-    else if (item.type === 'mood') v = v || '--';
-    else v = v || '--';
+    let valHtml = '';
+    if (item.key === 'mood') {
+      // 心情项显示 5 个表情
+      const moods = ['😀','😐','😨','😩','😣'];
+      valHtml = `<span class="mood-list-inline">
+        ${moods.map(m => `<span class="mood-face ${v===m?'active':''}" onclick="setQuickMood(event,'${m}')">${m}</span>`).join('')}
+      </span>`;
+    } else {
+      if (item.type === 'love') v = v===true || v==='有' ? '有' : (v ? v : '');
+      else v = v || '';
+      valHtml = v ? `<span class="ri-val" id="val-${item.key}">${v}</span>` : '';
+    }
     return `
       <li class="period-item-wrap" data-key="${item.key}">
         <div class="period-item" id="pi-${item.key}" onclick="openItemModal('${item.key}','${selectedDay}')">
           <span class="ri-icon" style="background:${item.color}">${item.emoji}</span>
           <span class="ri-label">${item.label}</span>
-          <span class="ri-val" id="val-${item.key}">${v}</span>
+          ${valHtml}
           <span class="ri-add">+</span>
         </div>
         <button class="period-delete-btn" onclick="deletePeriodItemRecord('${item.key}','${selectedDay}')">删除</button>
@@ -501,6 +510,16 @@ function renderPeriodList() {
   bindPeriodItemSwipe(list);
 }
 
+function setQuickMood(ev, mood) {
+  ev.stopPropagation();
+  const data = getData();
+  if (!data.periodRecords[selectedDay]) data.periodRecords[selectedDay] = {};
+  data.periodRecords[selectedDay]['mood'] = mood;
+  setData(data);
+  renderCalendar(); renderPeriodList();
+  showToast('✓ 心情已保存');
+}
+
 function bindPeriodItemSwipe(container) {
   container.querySelectorAll('.period-item-wrap').forEach(wrap => {
     const item = wrap.querySelector('.period-item');
@@ -508,8 +527,8 @@ function bindPeriodItemSwipe(container) {
     item.addEventListener('touchstart', e => { sx=e.touches[0].clientX; sw=false; });
     item.addEventListener('touchmove', e => {
       const dx = sx - e.touches[0].clientX;
-      if (dx > 30 && !sw) { item.classList.add('swiped'); sw = true; }
-      if (dx < -30 && sw) { item.classList.remove('swiped'); sw = false; }
+      if (dx > 40 && !sw) { item.classList.add('swiped'); sw = true; }
+      if (dx < -40 && sw) { item.classList.remove('swiped'); sw = false; }
     });
     document.addEventListener('click', ev => { if (!wrap.contains(ev.target) && item.classList.contains('swiped')) item.classList.remove('swiped'); });
   });
@@ -586,53 +605,25 @@ function openItemModal(key, dateStr) {
     return;
   }
 
-  let inputHtml = `<div class="modal-date-row"><label>日期：</label><input type="date" id="recordDateInput" value="${currentRecordDate}"></div>`;
+  const ph = { color:'如：鲜红、暗红、褐色', pain:'如：无痛、轻度、中度、严重', symptom:'如：头痛、腹痛、乳房胀痛',
+               discharge:'如：正常、增多、异常', temp:'如：36.5℃', weight:'如：60.8kg', medicine:'如：维生素、布洛芬、叶酸' };
 
-  const quickOptions = {
-    color: ['鲜红','暗红','褐色','粉色','黑色'],
-    pain: ['无痛','轻度','中度','严重'],
-    symptom: ['头痛','腹痛','乳房胀痛','腰酸','乏力','恶心'],
-    discharge: ['正常','增多','减少','异常'],
-    temp: ['36.0','36.3','36.5','36.8','37.0','37.3'],
-    weight: ['50.0','55.0','60.0','65.0','70.0'],
-    medicine: ['维生素','布洛芬','叶酸','止痛药','感冒药']
-  };
+  let inputHtml = `<div class="modal-date-row"><label>日期：</label><input type="date" id="recordDateInput" value="${currentRecordDate}"></div>`;
 
   if (item.type === 'love') {
     inputHtml += `
-      <div style="display:flex;gap:10px;margin-top:8px;">
+      <div style="display:flex;gap:10px;margin-top:10px;">
         <button type="button" id="loveYes" onclick="setLoveValue(true)" style="flex:1;padding:12px;border:1.5px solid var(--primary-light);border-radius:12px;background:#fff;font-size:15px;">有</button>
         <button type="button" id="loveNo" onclick="setLoveValue(false)" style="flex:1;padding:12px;border:1.5px solid var(--primary-light);border-radius:12px;background:#fff;font-size:15px;">无</button>
       </div>
       <input type="hidden" id="recordValInput">`;
   } else {
-    const ph = { color:'如：鲜红、暗红、褐色', pain:'如：无痛、轻度、中度、严重', symptom:'如：头痛、腹痛、乳房胀痛',
-                 discharge:'如：正常、增多、异常', temp:'如：36.5℃', weight:'如：60.8kg', medicine:'如：维生素、布洛芬、叶酸' };
-    const opts = quickOptions[key] || [];
-    let optsHtml = '';
-    if (opts.length) {
-      optsHtml = `<div style="display:flex;flex-wrap:wrap;gap:8px;margin:10px 0;">
-        ${opts.map(o => `<button type="button" class="quick-opt-btn" onclick="setRecordVal('${o.replace(/'/g,'\\\'')}')">${o}</button>`).join('')}
-        <button type="button" class="quick-opt-btn edit" onclick="focusRecordInput()">✏️ 编辑</button>
-      </div>`;
-    }
-    inputHtml += optsHtml + `<input type="text" id="recordValInput" placeholder="${ph[key] || '请输入'}" style="width:100%;padding:10px;border:1.5px solid var(--primary-light);border-radius:10px;font-size:14px;">`;
+    inputHtml += `<input type="text" id="recordValInput" placeholder="${ph[key] || '请输入'}" style="width:100%;margin-top:12px;padding:10px;border:1.5px solid var(--primary-light);border-radius:10px;font-size:14px;">`;
   }
 
   body.innerHTML = inputHtml;
   document.getElementById('modalOverlay').classList.add('show');
   if (item.type === 'love') setTimeout(() => setLoveValue(true), 50);
-}
-
-function setRecordVal(val) {
-  const input = document.getElementById('recordValInput');
-  input.value = val;
-  input.style.background = 'var(--primary-light)';
-  setTimeout(() => input.style.background = '#fff', 200);
-}
-
-function focusRecordInput() {
-  document.getElementById('recordValInput').focus();
 }
 
 function setLoveValue(val) {
