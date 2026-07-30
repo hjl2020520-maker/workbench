@@ -1,5 +1,5 @@
 // ============= 数据存储 =============
-const STORE_KEY = 'workbench-v5';
+const STORE_KEY = 'workbench-v6';
 const DATA_VERSION = 2;
 
 function getData() {
