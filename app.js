@@ -1,14 +1,43 @@
 // ============= 数据存储 =============
 const STORE_KEY = 'workbench-v5';
+const DATA_VERSION = 2;
 
 function getData() {
-  try { return JSON.parse(localStorage.getItem(STORE_KEY)) || defaultData(); }
-  catch { return defaultData(); }
+  let data;
+  try { data = JSON.parse(localStorage.getItem(STORE_KEY)); }
+  catch { data = null; }
+  if (!data || data._version !== DATA_VERSION) {
+    // 版本升级：合并默认数据，保留用户已存的记录
+    const def = defaultData();
+    if (data) {
+      data._version = DATA_VERSION;
+      // 合并 periodItems（用新默认值补全缺失的）
+      if (!data.periodItems || data.periodItems.length < def.periodItems.length) {
+        const existingKeys = (data.periodItems || []).map(i => i.key);
+        data.periodItems = [...(data.periodItems || []), ...def.periodItems.filter(i => !existingKeys.includes(i.key))];
+      }
+      // 合并 categoriesOut
+      if (!data.categoriesOut || data.categoriesOut.length < def.categoriesOut.length) {
+        const existingNames = (data.categoriesOut || []).map(c => c.name);
+        data.categoriesOut = [...(data.categoriesOut || []), ...def.categoriesOut.filter(c => !existingNames.includes(c.name))];
+      }
+      // 合并 categoriesIn
+      if (!data.categoriesIn || data.categoriesIn.length < def.categoriesIn.length) {
+        const existingNames = (data.categoriesIn || []).map(c => c.name);
+        data.categoriesIn = [...(data.categoriesIn || []), ...def.categoriesIn.filter(c => !existingNames.includes(c.name))];
+      }
+      setData(data);
+      return data;
+    }
+    return def;
+  }
+  return data;
 }
 function setData(data) { localStorage.setItem(STORE_KEY, JSON.stringify(data)); }
 
 function defaultData() {
   return {
+    _version: DATA_VERSION,
     records: [],
     members: ['我', '家人'],
     periodStart: null, periodLength: 5, cycleLength: 28,
@@ -482,18 +511,14 @@ function renderPeriodList() {
   const rec = data.periodRecords[selectedDay] || {};
 
   list.innerHTML = data.periodItems.map(item => {
-    let v = rec[item.key];
+    const v = rec[item.key];
     let valHtml = '';
     if (item.key === 'mood') {
-      // 心情项显示 5 个表情
+      // 心情项显示 5 个表情按钮
       const moods = ['😀','😐','😨','😩','😣'];
       valHtml = `<span class="mood-list-inline">
         ${moods.map(m => `<span class="mood-face ${v===m?'active':''}" onclick="setQuickMood(event,'${m}')">${m}</span>`).join('')}
       </span>`;
-    } else {
-      if (item.type === 'love') v = v===true || v==='有' ? '有' : (v ? v : '');
-      else v = v || '';
-      valHtml = v ? `<span class="ri-val" id="val-${item.key}">${v}</span>` : '';
     }
     return `
       <li class="period-item-wrap" data-key="${item.key}">
